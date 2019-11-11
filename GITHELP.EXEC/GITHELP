@@ -213,9 +213,36 @@ Browse_Cmd:
   * --------------------------- */
 tcmd:
   parse arg cmd
+  call popup 'Invoking command:' cmd
   cmd = 'bash &&' cmd
   x = bpxwunix(cmd,,so.,se.,env.)
   return x
+
+popup:
+ parse arg msg1
+ msg2 = 'Patience . . .'
+  call pfshow 'off'           /* make sure pfshow is off */
+ 'addpop'
+ 'Control Display Lock'
+ 'Display Panel(gitpop)'
+ 'rempop'
+  call pfshow 'reset'         /* make sure pfshow is reset */
+ return
+
+pfshow:
+  if zpfshow = 'OFF' then return
+  arg pfkopt
+  if pfkopt = 'RESET' then do
+    if pfkeys = 'ON' then
+    'select pgm(ispopf) parm(FKA,ON)'
+  end
+  if pfkopt = 'OFF' then do
+    'vget (zpfshow)'
+    pfkeys = zpfshow
+    if pfkeys /= 'OFF' then
+    'select pgm(ispopf) parm(FKA,OFF)'
+  end
+  return
 
   /* ----------------------------------------------------- *
   | Get the users current OMVS enviornment for use in the |
@@ -325,6 +352,17 @@ _z+@z
      if (&row = 0)
         &vsel = &Z
 )End
+>Panel gitpop
+)ATTR DEFAULT(%+_)
+  @ type(output) caps(off) just(left)
+)BODY WINDOW(58,4)
++
+@msg1
+@msg2
++
+)INIT
+  &ZWINTTL = 'GIT Help Patience'
+)END
 >End  */
 
 
