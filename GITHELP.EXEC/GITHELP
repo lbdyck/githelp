@@ -22,16 +22,18 @@
 
   parse value '' with rx null status
 
-  /* ---------------------------- *
-  | Get the git OMVS environment |
-  * ---------------------------- */
-  call getenv
-
   /* -------------------------------------- *
   | Get into ISPF and load the ISPF panels |
   * -------------------------------------- */
   address ispexec
   load_info = loadispf()
+
+  call popup 'Getting git OMVS environment variables.'
+
+  /* ---------------------------- *
+  | Get the git OMVS environment |
+  * ---------------------------- */
+  call getenv
 
   /* -------------- *
   | Open our table |
