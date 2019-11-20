@@ -265,16 +265,11 @@ GETENV:
   x = bpxwunix(cmd,,so.,se.)
   home    = strip(so.1)
   rv=bpxwunix('env',,'env.',,,1)
+  x = env.0
+  x = x + 1
+  env.x = 'HOME='pwd
+  env.0 = x
   drop so. se.
-  return
-
-  /* -------------------- *
-  | Add info to env stem |
-  * -------------------- */
-add_env:
-  parse arg env_val
-  envc = envc + 1
-  env.envc = env_val
   return
 
 docmd:
