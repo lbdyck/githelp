@@ -142,7 +142,8 @@
             zerralrm = 'NO'
             zerrtp   = 'NOTIFY'
             zerrsm = 'Empty.'
-    zerrlm = 'The Only request resulted in zero rows. Refreshing the table.'
+            zerrlm = 'The Only request resulted in zero rows.' ,
+                     'Refreshing the table.'
             'Setmsg msg(isrz003)'
           end
         end
