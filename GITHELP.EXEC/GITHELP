@@ -16,6 +16,7 @@
   | Author:    Lionel B. Dyck                                  |
   |                                                            |
   | History:  (most recent on top)                             |
+  |            05/17/20 LBD - Enabled to open in split screen  |
   |            01/25/20 LBD - Support Find command             |
   |                         - Set default scroll to CSR        |
   |            01/09/20 LBD - Enhance Only to recurse if empty |
@@ -28,13 +29,33 @@
   |                           should have been to start wtih   |
   |            11/10/19 LBD - Creation                         |
   |                                                            |
+  | ---------------------------------------------------------- |
+  |    Githelp - the z/OS ISPF Git Help Interface              |
+  |    Copyright (C) 2019-2020 - Henri Kuiper and Lionel Dyck  |
+  |                                                            |
+  |    This program is free software: you can redistribute it  |
+  |    and/or modify it under the terms of the GNU General     |
+  |    Public License as published by the Free Software        |
+  |    Foundation, either version 3 of the License, or (at     |
+  |    your option) any later version.                         |
+  |                                                            |
+  |    This program is distributed in the hope that it will be |
+  |    useful, but WITHOUT ANY WARRANTY; without even the      |
+  |    implied warranty of MERCHANTABILITY or FITNESS FOR A    |
+  |    PARTICULAR PURPOSE.  See the GNU General Public License |
+  |    for more details.                                       |
+  |                                                            |
+  |    You should have received a copy of the GNU General      |
+  |    Public License along with this program.  If not, see    |
+  |    <https://www.gnu.org/licenses/>.                        |
   * ---------------------------------------------------------- */
 
   parse value '' with rx null status
   passone = 0                   /* determine wrap with only */
   save_floc = 0                 /* Save last find location  */
-  save_find = null              /* save last find string   */
-  scrl = 'CSR'                  /* default scroll amt      */
+  save_find = null              /* save last find string    */
+  scrl = 'CSR'                  /* default scroll amt       */
+  ghtbl = 'GH'time('s')         /* dynamic table name       */
 
   arg gitfuncs   /* wjs*/
   do forever
@@ -72,6 +93,8 @@
   zctdesc  = "RFIND for zigi Dialog"
   zcttrunc = 0
   'vget (zsctpref)'
+  if zsctpref = null
+     then zsctpref = 'ISP'
   ctab = zsctpref'cmds'
   'tbtop' ctab
   'tbscan' ctab 'arglist(zctdesc) condlist(EQ) Next'
@@ -96,7 +119,7 @@
   gitcat = 'git manpage'
   gitc = 1
   git.gitc = gitcmd gitcat
-  'tbadd githelp'
+  'tbadd' ghtbl
 
   /* ---------------------- *
   | Now get the git guides |
@@ -114,7 +137,7 @@
     gitcat = strip(gitcat)
     gitc = gitc + 1
     git.gitc = gitcmd gitcat
-    'tbadd githelp'
+    'tbadd' ghtbl
     if wordpos(translate(gitcmd),gitfuncs)>0 then /* wjs*/
     do
       help=help+1
@@ -138,7 +161,7 @@
     gitcat = strip(so.j)
     gitc = gitc + 1
     git.gitc = gitcmd gitcat
-    'tbadd githelp'
+    'tbadd' ghtbl
     if wordpos(translate(substr(gitcmd,5)),gitfuncs)>0 then /* wjs*/
     do
       help=help+1
@@ -161,7 +184,7 @@
     * ----------------- */
     stop = 0           /* saved top of table */
     ztdsels = 0
-    'tbtop githelp'
+    'tbtop' ghtbl
     /* ----------------- *
     | Display the table |
     * ----------------- */
@@ -171,8 +194,8 @@
     do forever
       zcmd = null
       if stop > 0 then do
-        'tbtop githelp'
-        'tbskip githelp number('stop')'
+        'tbtop' ghtbl
+        'tbskip' ghtbl 'number('stop')'
       end
       /* -------------------------------------------- *
       | Update ZIGRFIND for Passthru to enable RFIND |
@@ -180,8 +203,8 @@
       zigrfind = 'PASSTHRU'
       'vput (zigrfind)'
       if ztdsels > 0 then
-      'tbdispl githelp'
-      else 'tbdispl githelp panel('gpanel')'
+      'tbdispl' ghtbl
+      else 'tbdispl' ghtbl 'panel('gpanel')'
       trc = rc
       /* ----------------------- *
       | Reset ZIGRFIND to blank |
@@ -193,8 +216,8 @@
       * ------------------------------------ */
       if trc > 4 then leave
       if row > 0 then do
-        'tbtop githelp'
-        'tbskip githelp number('row')'
+        'tbtop' ghtbl
+        'tbskip' ghtbl 'number('row')'
       end
 
       /* -------------------- *
@@ -235,7 +258,7 @@
     end
   end  /* wjs*/
 
-  'tbend githelp'
+  'tbend' ghtbl
 
   x = dropispf(load_info)
   exit
@@ -251,14 +274,14 @@ do_find:
   save_find = find
   wrap   = 0
   if save_floc > 0 then do
-    'tbtop githelp'
-    'tbskip githelp number('save_floc')'
+    'tbtop' ghtbl
+    'tbskip' ghtbl 'number('save_floc')'
   end
   do forever
-    'tbskip githelp'
+    'tbskip' ghtbl
     if rc > 0 then do
-      'tbtop githelp'
-      'tbskip githelp'
+      'tbtop' ghtbl
+      'tbskip' ghtbl
       if wrap = 1 then do
         zerrsm = 'Not Found'
         zerrlm = find 'string not found in any member' ,
@@ -269,7 +292,7 @@ do_find:
       else wrap = 1
     end
     if pos(find,translate(gitcmd gitcat)) > 0 then do
-      'tbquery githelp position(row)'
+      'tbquery' ghtbl 'position(row)'
       crp = row
       save_floc = row
       if wrap = 1 then do
@@ -292,14 +315,14 @@ do_find:
   * ---------------- */
 Do_Only:
   ostring = translate(word(zcmd,2))
-  'tbtop githelp'
+  'tbtop' ghtbl
   do forever
-    'tbskip githelp'
+    'tbskip' ghtbl
     if rc > 0 then leave
     if pos(ostring,translate(gitcmd gitcat)) = 0 then
-    'tbdelete githelp'
+    'tbdelete' ghtbl
   end
-  'tbquery githelp rownum(rows)'
+  'tbquery' ghtbl 'rownum(rows)'
   if rows = 0 then do
     call do_refresh
     if passone = 0 then do
@@ -323,7 +346,7 @@ Do_Only:
   | Create our ISPF Table |
   * --------------------- */
 Create_tab:
-  'tbcreate githelp names(gitcmd gitcat) nowrite share'
+  'tbcreate' ghtbl 'names(gitcmd gitcat) nowrite share'
   return
 
   /* ----------------------------------- *
@@ -476,8 +499,8 @@ docmd:
   $ type(output) intens(low )
 )Body Expand(\\) width(&zscreenw)
 +\-\%git manpages+\-\
-%Command ===>_zcmd                  \ \                        %Scroll ===>_scrl
-+
+%Command ===>_zcmd                  \ \                       %Scroll ===>_scrl+
++ \ \ %F3  +
 +Commands:%Find+string%Only+string%Refresh+
 +Line:%S+select to view
 +
@@ -877,12 +900,12 @@ DropISPF: Procedure
   end
   return 0
 Do_Refresh:
-  'tbend githelp'
+  'tbend' ghtbl
   call create_tab
   do i = 1 to git.0
     parse value git.i with gitcmd gitcat
-    'tbadd githelp'
+    'tbadd' ghtbl
   end
-  'tbtop githelp'
+  'tbtop' ghtbl
   stop = 0
   return
